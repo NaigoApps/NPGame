@@ -3,19 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package npgame;
+package npgame.graph.graphic;
+
+import java.awt.Graphics2D;
 
 /**
  *
  * @author Lorenzo
  */
-public class NPGame {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        new NPFrame().setVisible(true);
-    }
-    
+public interface Drawable {
+    public void paint(Graphics2D g);
+    public boolean hits(int x, int y);
 }
