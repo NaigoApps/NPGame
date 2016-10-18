@@ -127,7 +127,7 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
+        
     }
 
 }
