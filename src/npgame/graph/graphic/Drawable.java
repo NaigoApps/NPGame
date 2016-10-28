@@ -5,6 +5,7 @@
  */
 package npgame.graph.graphic;
 
+import java.awt.Component;
 import java.awt.Graphics2D;
 
 /**
@@ -12,6 +13,6 @@ import java.awt.Graphics2D;
  * @author Lorenzo
  */
 public interface Drawable {
-    public void paint(Graphics2D g);
-    public boolean hits(int x, int y);
+    public void paint(Component parent, Graphics2D g);
+    public boolean hits(Component parent, int x, int y);
 }
