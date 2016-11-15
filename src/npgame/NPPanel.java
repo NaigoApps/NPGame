@@ -28,7 +28,7 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     public static final int NEW_NODE_MODE = 1;
     public static final int NEW_ARC_MODE = 2;
     public static final int MOVE_NODE_MODE = 3;
-
+    
     private GNode mem;
     private int memX;
     private int memY;
@@ -51,10 +51,10 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
         g.clearRect(0, 0, getWidth(), getHeight());
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (GArc a : graph.getArcs()) {
-            a.paint((Graphics2D) g);
+            a.paint(this, (Graphics2D) g);
         }
         for (GNode n : graph.getNodes()) {
-            n.paint((Graphics2D) g);
+            n.paint(this, (Graphics2D) g);
         }
     }
 
@@ -67,7 +67,7 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     public void mousePressed(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-        GNode node = graph.getNode(x, y);
+        GNode node = graph.getNode(this, x, y);
         if(SwingUtilities.isLeftMouseButton(e)){
             if (node == null && mode == EMPTY_MODE) {
                 mode = NEW_NODE_MODE;
@@ -92,10 +92,10 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     public void mouseReleased(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-        GNode n = graph.getNode(x, y);
+        GNode n = graph.getNode(this, x, y);
         if (mode == NEW_NODE_MODE && n == null) {
             Node newNode = new Node();
-            GNode newGNode = new GNode(newNode, x, y, GNode.DEFAULT_SIZE);
+            GNode newGNode = new GNode(newNode, x, y, GNode.DEFAULT_SIZE, graph);
             graph.addNode(newGNode);
         } else if (mode == NEW_ARC_MODE) {
             if (n != null) {
@@ -119,8 +119,8 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     @Override
     public void mouseDragged(MouseEvent e) {
         if(mode == MOVE_NODE_MODE){
-            mem.setX(memX + e.getXOnScreen() - memXScreen);
-            mem.setY(memY + e.getYOnScreen() - memYScreen);
+            mem.setX(memX + mem.toGridX(this,e.getXOnScreen() - memXScreen));
+            mem.setY(memY + mem.toGridY(this,e.getYOnScreen() - memYScreen));
         }
         repaint();
     }

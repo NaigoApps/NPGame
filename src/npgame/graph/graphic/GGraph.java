@@ -5,6 +5,7 @@
  */
 package npgame.graph.graphic;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import npgame.graph.Arc;
 import npgame.graph.Graph;
@@ -20,19 +21,32 @@ public class GGraph {
 
     private ArrayList<GArc> arcs;
     private ArrayList<GNode> nodes;
+    private int gridWidth;
+    private int gridHeight;
 
-    public GGraph(Graph g) {
+    public GGraph(Graph g, int gridw, int gridh) {
         this.graph = g;
+        this.gridWidth = gridw;
+        this.gridHeight = gridh;
         this.nodes = new ArrayList<>();
         this.arcs = new ArrayList<>();
-        init();
+        init(gridw, gridh);
     }
 
-    public void init() {
+    public void init(int w, int h) {
         nodes.clear();
         arcs.clear();
+        ArrayList<Integer[]> grid = new ArrayList<>();
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                grid.add(new Integer[]{i, j});
+            }
+        }
         for (Node n : graph.getNodes()) {
-            nodes.add(new GNode(n, 0, 0, GNode.DEFAULT_SIZE));
+            int gridindex = (int) (Math.random() * grid.size());
+            Integer[] point = grid.get(gridindex);
+            grid.remove(gridindex);
+            nodes.add(new GNode(n, point[0], point[1], GNode.DEFAULT_SIZE, this));
         }
         for (Arc a : graph.getArcs()) {
             arcs.add(new GArc(findGraphicNode(a.getSource()), findGraphicNode(a.getDestination())));
@@ -61,9 +75,9 @@ public class GGraph {
         return null;
     }
 
-    public GNode getNode(int x, int y) {
+    public GNode getNode(Component parent, int x, int y) {
         for (GNode node : nodes) {
-            if(node.hits(x, y)){
+            if (node.hits(parent, x, y)) {
                 return node;
             }
         }
@@ -71,8 +85,21 @@ public class GGraph {
     }
 
     public void addArc(GNode src, GNode dst) {
-        if(graph.addArc(new Arc(src.getNode(), dst.getNode()))){
+        if (graph.addArc(new Arc(src.getNode(), dst.getNode()))) {
             arcs.add(new GArc(src, dst));
         }
     }
+
+    public int getGridHeight() {
+        return gridHeight;
+    }
+
+    public int getGridWidth() {
+        return gridWidth;
+    }
+
+    int getGridMargin() {
+        return 50;
+    }
+
 }
