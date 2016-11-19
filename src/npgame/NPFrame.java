@@ -24,8 +24,8 @@ public class NPFrame extends JFrame{
     public NPFrame() throws HeadlessException {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(MAXIMIZED_BOTH);
-        Graph g = generateGraph(100);
-        panel = new NPPanel(new GGraph(g, 60, 30));
+        Graph g = generateGraph(6);
+        panel = new NPPanel(new GGraph(g, 40, 20));
         add(panel, BorderLayout.CENTER);
     }
 
@@ -39,6 +39,12 @@ public class NPFrame extends JFrame{
         for (int i = 0; i < nodes.length - 1; i++) {
             g.addArc(new Arc(nodes[i], nodes[i+1]));
         }
+//        for (int i = 0; i < 10; i++) {
+//            Arc a = new Arc(nodes[(int)(Math.random()*nodes.length)], nodes[(int)(Math.random()*nodes.length)]);
+//            if(!g.contains(a)){
+//                g.addArc(a);
+//            }
+//        }
         return g;
     }
     

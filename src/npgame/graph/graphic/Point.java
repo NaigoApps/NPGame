@@ -5,14 +5,17 @@
  */
 package npgame.graph.graphic;
 
-import java.awt.Graphics2D;
-import npgame.NPPanel;
-
 /**
  *
  * @author Lorenzo
  */
-public interface Drawable {
-    public void paint(NPPanel parent, Graphics2D g);
-    public boolean hits(NPPanel parent, int x, int y);
+public class Point {
+    double x;
+    double y;
+
+    public Point(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+    
 }

@@ -13,13 +13,23 @@ import java.util.UUID;
  */
 public class Node {
     private UUID id;
+    private boolean visited;
 
     public Node() {
         id = UUID.randomUUID();
+        visited = false;
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public boolean isVisited() {
+        return visited;
+    }
+
+    public void setVisited(boolean visited) {
+        this.visited = visited;
     }
 
     @Override

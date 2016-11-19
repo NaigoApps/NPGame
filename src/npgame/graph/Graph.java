@@ -43,6 +43,15 @@ public class Graph {
         return nodes.toArray(new Node[nodes.size()]);
     }
 
+    public boolean contains(Arc a) {
+        for (Arc arc : arcs) {
+            if (arc.equals(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     
     
 }

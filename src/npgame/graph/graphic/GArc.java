@@ -7,8 +7,11 @@ package npgame.graph.graphic;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import npgame.NPPanel;
+import npgame.ThreadRenderer;
+import npgame.graph.Arc;
 
 /**
  *
@@ -18,47 +21,72 @@ public class GArc implements Drawable {
 
     private GNode source;
     private GNode destination;
+    private LagrangeLine line;
 
-    public GArc(GNode source, GNode destination) {
+    private Arc arc;
+
+    public GArc(Arc arc, GNode source, GNode destination) {
+        this.arc = arc;
         this.source = source;
         this.destination = destination;
+        line = new LagrangeLine();
+        line.addPoint(new Point(source.getX(), source.getY()));
+        line.addPoint(new Point(noise((2 * source.getX() + destination.getX()) / 3), noise((2 * source.getY() + destination.getY()) / 3)));
+        line.addPoint(new Point(noise((source.getX() + 2 * destination.getX()) / 3), noise((source.getY() + 2 * destination.getY()) / 3)));
+        line.addPoint(new Point(destination.getX(), destination.getY()));
+    }
+
+    private double noise(double val) {
+        return (Math.random() * 0.2 + 0.9) * val;
     }
 
     @Override
-    public void paint(Component c, Graphics2D g) {
-        g.setColor(Color.GREEN);
-        g.setStroke(new BasicStroke(3));
+    public void paint(NPPanel parent, Graphics2D g) {
+        g.setColor(Color.RED);
+        int x[] = new int[line.getPointsNumber()];
+        int y[] = new int[line.getPointsNumber()];
+        for (int i = 0; i < line.getPointsNumber(); i++) {
+            x[i] = parent.getRealX(line.getPoint(i).x);
+            y[i] = parent.getRealY(line.getPoint(i).y);
+        }
+        g.drawPolyline(x,y,line.getPointsNumber());
         
-        int realSX = source.getRealX(c);
-        int realSY = source.getRealY(c);
-        int realDX = destination.getRealX(c);
-        int realDY = destination.getRealY(c);
-        g.setStroke(new BasicStroke(10));
-        g.drawLine(realSX, realSY, realDX, realDY);
-        g.setStroke(new BasicStroke(4));
-        g.setColor(Color.PINK);
-        g.drawLine(realSX, realSY, realDX, realDY);
-        double m = (double) (realSY - realDY) / (realSX - realDX);
-        double r = (double) GNode.DEFAULT_SIZE / 2;
-        g.setColor(Color.BLACK);
-        double x1 = -Math.sqrt(r * r / (m * m + 1));
-        double x2 = +Math.sqrt(r * r / (m * m + 1));
-        double y1 = m * x1;
-        double y2 = m * x2;
-        x1 += realDX;
-        x2 += realDX;
-        y1 += realDY;
-        y2 += realDY;
-        if (Math.pow(realSX - x1, 2) + Math.pow(realSY - y1, 2) < Math.pow(realSX - x2, 2) + Math.pow(realSY - y2, 2)) {
-            g.fillOval((int) (x1 - 7), (int) (y1 - 7), 15, 15);
-        } else {
-            g.fillOval((int) (x2 - 7), (int) (y2 - 7), 15, 15);
+        if (arc.isVisited()) {
+            int arrow = (int) (ThreadRenderer.rendererCounter() % line.getPointsNumber());
+
+            AffineTransform old = g.getTransform();
+            g.translate(parent.getRealX(line.getPoint(arrow).x),
+                    parent.getRealY(line.getPoint(arrow).y));
+            g.rotate(Math.PI / 2 + Math.atan2(
+                    line.getDerivative(arrow).y,
+                    line.getDerivative(arrow).x));
+            //g.rotate(Math.PI / 3);
+            g.setColor(Color.CYAN);
+            
+            g.fillPolygon(new int[]{0,10,10,0,-10,-10,0}, new int[]{0,10,20,10,20,10,0}, 7);
+            g.setColor(Color.BLUE);
+            g.drawPolygon(new int[]{0,10,10,0,-10,-10,0}, new int[]{0,10,20,10,20,10,0}, 7);
+            
+            g.setTransform(old);
+
         }
     }
 
     @Override
-    public boolean hits(Component c, int x, int y) {
+    public boolean hits(NPPanel c, int x, int y) {
         return false;
+    }
+
+    public Arc getArc() {
+        return arc;
+    }
+
+    public GNode getDestination() {
+        return destination;
+    }
+
+    public GNode getSource() {
+        return source;
     }
 
 }

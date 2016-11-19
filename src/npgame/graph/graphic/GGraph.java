@@ -7,6 +7,9 @@ package npgame.graph.graphic;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Objects;
+import npgame.NPPanel;
 import npgame.graph.Arc;
 import npgame.graph.Graph;
 import npgame.graph.Node;
@@ -45,11 +48,16 @@ public class GGraph {
         for (Node n : graph.getNodes()) {
             int gridindex = (int) (Math.random() * grid.size());
             Integer[] point = grid.get(gridindex);
-            grid.remove(gridindex);
+            for (Iterator<Integer[]> i = grid.iterator(); i.hasNext();) {
+                Integer[] v = i.next();
+                if(Objects.equals(v[0], point[0]) || Objects.equals(v[1], point[1])){
+                    i.remove();
+                }
+            }
             nodes.add(new GNode(n, point[0], point[1], GNode.DEFAULT_SIZE, this));
         }
         for (Arc a : graph.getArcs()) {
-            arcs.add(new GArc(findGraphicNode(a.getSource()), findGraphicNode(a.getDestination())));
+            arcs.add(new GArc(a, findGraphicNode(a.getSource()), findGraphicNode(a.getDestination())));
         }
     }
 
@@ -75,7 +83,7 @@ public class GGraph {
         return null;
     }
 
-    public GNode getNode(Component parent, int x, int y) {
+    public GNode getNode(NPPanel parent, int x, int y) {
         for (GNode node : nodes) {
             if (node.hits(parent, x, y)) {
                 return node;
@@ -85,8 +93,9 @@ public class GGraph {
     }
 
     public void addArc(GNode src, GNode dst) {
-        if (graph.addArc(new Arc(src.getNode(), dst.getNode()))) {
-            arcs.add(new GArc(src, dst));
+        Arc a = new Arc(src.getNode(), dst.getNode());
+        if (graph.addArc(a)) {
+            arcs.add(new GArc(a, src, dst));
         }
     }
 
@@ -98,7 +107,7 @@ public class GGraph {
         return gridWidth;
     }
 
-    int getGridMargin() {
+    public int getGridMargin() {
         return 50;
     }
 

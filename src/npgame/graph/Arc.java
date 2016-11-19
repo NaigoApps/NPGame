@@ -12,10 +12,12 @@ package npgame.graph;
 public class Arc {
     private Node source;
     private Node destination;
+    private boolean visited;
 
     public Arc(Node source, Node destination) {
         this.source = source;
         this.destination = destination;
+        this.visited = true;
     }
 
     public Node getDestination() {
@@ -40,6 +42,14 @@ public class Arc {
             return ((Arc)obj).getSource().equals(getSource()) && ((Arc)obj).getDestination().equals(getDestination());
         }
         return false;
+    }
+
+    public boolean isVisited() {
+        return visited;
+    }
+    
+    public void setVisited(boolean visited){
+        this.visited = visited;
     }
     
     

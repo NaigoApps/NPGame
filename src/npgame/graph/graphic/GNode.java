@@ -16,17 +16,19 @@ import npgame.graph.Node;
  *
  * @author Lorenzo
  */
-public class GNode implements Drawable{
+public class GNode implements Drawable {
 
     public static final int DEFAULT_SIZE = 25;
 
     private GGraph graph;
     private Node node;
-    
+
     private int x;
     private int y;
-    
+
     private int size;
+
+    private boolean highlighted;
 
     public GNode(Node node, int x, int y, int size, GGraph graph) {
         this.node = node;
@@ -35,16 +37,44 @@ public class GNode implements Drawable{
         this.size = size;
         this.graph = graph;
     }
-    
+
     @Override
-    public void paint(Component parent, Graphics2D g) {
-        g.setColor(Color.RED);
-        int realX = getRealX(parent);
-        int realY = getRealY(parent);
-        g.fillOval(realX - size/2, realY - size/2, size, size);
-        g.setStroke(new BasicStroke(5));
-        g.setColor(Color.BLUE);
-        g.drawOval(realX - size/2, realY - size/2, size, size);
+    public void paint(NPPanel parent, Graphics2D g) {
+        if (node.isVisited()) {
+            g.setColor(Color.RED);
+            int realX = parent.getRealX(x);
+            int realY = parent.getRealY(y);
+            g.translate(realX, realY);
+            g.fillOval(-size / 2, -size / 2, size, size);
+            g.setStroke(new BasicStroke(5));
+            g.setColor(Color.BLUE);
+            g.drawOval(-size / 2, -size / 2, size, size);
+
+            g.translate(-realX, -realY);
+
+        } else if (isHighlighted()) {
+            g.setColor(Color.GRAY.brighter());
+            int realX = parent.getRealX(x);
+            int realY = parent.getRealY(y);
+            g.translate(realX, realY);
+            g.fillOval(-size / 2, -size / 2, size, size);
+            g.setStroke(new BasicStroke(5));
+            g.setColor(Color.GRAY.darker());
+            g.drawOval(-size / 2, -size / 2, size, size);
+
+            g.translate(-realX, -realY);
+        } else {
+            g.setColor(Color.GRAY.darker());
+            int realX = parent.getRealX(x);
+            int realY = parent.getRealY(y);
+            g.translate(realX, realY);
+            g.fillOval(-size / 2, -size / 2, size, size);
+            g.setStroke(new BasicStroke(5));
+            g.setColor(Color.GRAY.brighter());
+            g.drawOval(-size / 2, -size / 2, size, size);
+
+            g.translate(-realX, -realY);
+        }
     }
 
     public int getSize() {
@@ -58,22 +88,14 @@ public class GNode implements Drawable{
     public int getY() {
         return y;
     }
-    
-    int getRealX(Component parent){
-        return x * (parent.getWidth() - 2*graph.getGridMargin()) / graph.getGridWidth() + graph.getGridMargin();
-    }
 
-    int getRealY(Component parent){
-        return y * (parent.getHeight()- 2*graph.getGridMargin()) / graph.getGridHeight()+ graph.getGridMargin();
-    }
-    
     public Node getNode() {
         return node;
     }
 
     @Override
-    public boolean hits(Component c, int x, int y) {
-        return (x - getRealX(c))*(x - getRealX(c)) + (y - getRealY(c))*(y - getRealY(c)) <= size*size/4;
+    public boolean hits(NPPanel parent, int x, int y) {
+        return (x - parent.getRealX(this.x)) * (x - parent.getRealX(this.x)) + (y - parent.getRealY(this.y)) * (y - parent.getRealY(this.y)) <= size * size / 4;
     }
 
     public void setX(int x) {
@@ -84,14 +106,12 @@ public class GNode implements Drawable{
         this.y = y;
     }
 
-    public int toGridX(Component parent, int i) {
-        return (i - graph.getGridMargin())*graph.getGridWidth()/(parent.getWidth() - 2*graph.getGridMargin());
+    public void setHighlighted(boolean highlighted) {
+        this.highlighted = highlighted;
     }
 
-    public int toGridY(Component parent, int i) {
-        return (i - graph.getGridMargin())*graph.getGridHeight()/(parent.getHeight()- 2*graph.getGridMargin());
+    public boolean isHighlighted() {
+        return highlighted;
     }
 
-    
-    
 }
