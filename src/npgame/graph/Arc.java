@@ -17,7 +17,7 @@ public class Arc {
     public Arc(Node source, Node destination) {
         this.source = source;
         this.destination = destination;
-        this.visited = true;
+        this.visited = false;
     }
 
     public Node getDestination() {

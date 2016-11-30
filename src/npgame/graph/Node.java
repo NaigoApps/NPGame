@@ -5,6 +5,8 @@
  */
 package npgame.graph;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,9 +16,11 @@ import java.util.UUID;
 public class Node {
     private UUID id;
     private boolean visited;
+    private final Graph graph;
 
-    public Node() {
+    public Node(Graph g) {
         id = UUID.randomUUID();
+        this.graph = g;
         visited = false;
     }
 
@@ -38,6 +42,18 @@ public class Node {
             return ((Node)obj).getId().equals(getId());
         }
         return false;
+    }
+
+    public List<Node> getNeighbours() {
+        Node[] nodes = graph.getNodes();
+        ArrayList<Node> neighbours = new ArrayList<>();
+        for (Node node : nodes) {
+            Arc a = new Arc(this, node);
+            if (graph.contains(a)) {
+                neighbours.add(node);
+            }
+        }
+        return neighbours;
     }
     
     

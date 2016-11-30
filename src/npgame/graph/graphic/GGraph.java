@@ -5,7 +5,6 @@
  */
 package npgame.graph.graphic;
 
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
@@ -36,7 +35,7 @@ public class GGraph {
         init(gridw, gridh);
     }
 
-    public void init(int w, int h) {
+    private void init(int w, int h) {
         nodes.clear();
         arcs.clear();
         ArrayList<Integer[]> grid = new ArrayList<>();
@@ -50,7 +49,8 @@ public class GGraph {
             Integer[] point = grid.get(gridindex);
             for (Iterator<Integer[]> i = grid.iterator(); i.hasNext();) {
                 Integer[] v = i.next();
-                if(Objects.equals(v[0], point[0]) || Objects.equals(v[1], point[1])){
+                if(Objects.equals(v[0], point[0]) || Objects.equals(v[1], point[1]) ||
+                        near(v[0],v[1],point[0],point[1],10)){
                     i.remove();
                 }
             }
@@ -109,6 +109,10 @@ public class GGraph {
 
     public int getGridMargin() {
         return 50;
+    }
+
+    private boolean near(int x1,int y1,int x2,int y2, int thresh) {
+        return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) < thresh*thresh;
     }
 
 }

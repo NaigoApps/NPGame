@@ -15,7 +15,7 @@ public class NPGame {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        new NPFrame().setVisible(true);
+        new NPMenu().setVisible(true);
     }
     
 }

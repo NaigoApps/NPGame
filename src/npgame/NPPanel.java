@@ -13,8 +13,11 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import npgame.graph.Node;
 import npgame.graph.graphic.GArc;
 import npgame.graph.graphic.GGraph;
 import npgame.graph.graphic.GNode;
@@ -30,7 +33,7 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     public static final int NEW_ARC_MODE = 2;
     public static final int MOVE_NODE_MODE = 3;
 
-    private GNode mem;
+    private GNode last;
     private int memX;
     private int memY;
     private int memXScreen;
@@ -38,7 +41,6 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
 
     private int mode;
 
-    private Thread renderer;
     private GGraph graph;
 
     public NPPanel(GGraph graph) {
@@ -46,8 +48,7 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.mode = EMPTY_MODE;
-        renderer = new ThreadRenderer(this);
-        renderer.start();
+        this.last = null;
     }
 
     @Override
@@ -57,10 +58,10 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
         for (int i = 0; i < graph.getGridWidth(); i++) {
             for (int j = 0; j < graph.getGridHeight(); j++) {
                 if (i < graph.getGridWidth() - 1) {
-                    g.drawLine(getRealX(i), getRealY(j), getRealX(i + 1), getRealY(j));
+                    g.drawLine((int) gridX2Px(i),(int)  gridY2Px(j),(int)  gridX2Px(i + 1),(int)  gridY2Px(j));
                 }
                 if (j < graph.getGridHeight() - 1) {
-                    g.drawLine(getRealX(i), getRealY(j), getRealX(i), getRealY(j + 1));
+                    g.drawLine((int) gridX2Px(i),(int)  gridY2Px(j),(int)  gridX2Px(i),(int)  gridY2Px(j + 1));
                 }
             }
         }
@@ -90,20 +91,37 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
         GNode node = graph.getNode(this, x, y);
         if (SwingUtilities.isLeftMouseButton(e)) {
             if (node != null) {
-                node.getNode().setVisited(true);
-                for (GArc arc : graph.getArcs()) {
-                    if(arc.getSource() == node || arc.getDestination() == node){
-                        if(arc.getSource().getNode().isVisited() && arc.getDestination().getNode().isVisited()){
+                if (last == null || last.getNode().getNeighbours().contains(node.getNode())) {
+                    node.getNode().setVisited(true);
+
+                    for (GArc arc : graph.getArcs()) {
+                        if (arc.getSource() == last && arc.getDestination() == node) {
                             arc.getArc().setVisited(true);
                         }
                     }
+                    last = node;
+                    GNode[] nodes = graph.getNodes();
+                    boolean winDetected = true;
+                    for (GNode n : nodes) {
+                        if (!n.getNode().isVisited()) {
+                            winDetected = false;
+                        }
+                    }
+                    if (!winDetected) {
+                        List<Node> newNeighbours = last.getNode().getNeighbours();
+                        boolean lostDetected = true;
+                        for (Node newNeighbour : newNeighbours) {
+                            if (!newNeighbour.isVisited()) {
+                                lostDetected = false;
+                            }
+                        }
+                        if(lostDetected){
+                            JOptionPane.showMessageDialog(this, "LOST");
+                        }
+                    }else{
+                        JOptionPane.showMessageDialog(this, "WIN");
+                    }
                 }
-                mem = node;
-//                memX = node.getX();
-//                memY = node.getY();
-//                memXScreen = e.getXOnScreen();
-//                memYScreen = e.getYOnScreen();
-//                mode = MOVE_NODE_MODE;
             }
         }
         repaint();
@@ -122,8 +140,8 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
     @Override
     public void mouseDragged(MouseEvent e) {
         if (mode == MOVE_NODE_MODE) {
-            mem.setX(memX + toGridDeltaX(this, e.getXOnScreen() - memXScreen));
-            mem.setY(memY + toGridDeltaY(this, e.getYOnScreen() - memYScreen));
+            last.setX(memX + toGridDeltaX(this, e.getXOnScreen() - memXScreen));
+            last.setY(memY + toGridDeltaY(this, e.getYOnScreen() - memYScreen));
         }
         repaint();
     }
@@ -154,12 +172,12 @@ public class NPPanel extends JPanel implements MouseListener, MouseMotionListene
         return Math.round(((float) i - graph.getGridMargin()) * graph.getGridHeight() / (getHeight() - 2 * graph.getGridMargin()));
     }
 
-    public int getRealX(double x) {
-        return (int) (x * (getWidth() - 2 * graph.getGridMargin()) / graph.getGridWidth() + graph.getGridMargin());
+    public double gridX2Px(double x) {
+        return x * (getWidth() - 2 * graph.getGridMargin()) / graph.getGridWidth() + graph.getGridMargin();
     }
 
-    public int getRealY(double y) {
-        return (int) (y * (getHeight() - 2 * graph.getGridMargin()) / graph.getGridHeight() + graph.getGridMargin());
+    public double gridY2Px(double y) {
+        return y * (getHeight() - 2 * graph.getGridMargin()) / graph.getGridHeight() + graph.getGridMargin();
     }
 
 }
