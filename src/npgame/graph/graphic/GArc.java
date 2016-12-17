@@ -35,10 +35,10 @@ public class GArc implements Drawable {
         this.destination = destination;
         this.arrow = 0;
         line = new LagrangeLine();
-        line.addPoint(new Point(source.getX(), source.getY()));
-        line.addPoint(new Point(noise((2 * source.getX() + destination.getX()) / 3), noise((2 * source.getY() + destination.getY()) / 3)));
-        line.addPoint(new Point(noise((source.getX() + 2 * destination.getX()) / 3), noise((source.getY() + 2 * destination.getY()) / 3)));
-        line.addPoint(new Point(destination.getX(), destination.getY()));
+        line.addNode(new Point(source.getX(), source.getY()));
+        line.addNode(new Point(noise((2 * source.getX() + destination.getX()) / 3), noise((2 * source.getY() + destination.getY()) / 3)));
+        line.addNode(new Point(noise((source.getX() + 2 * destination.getX()) / 3), noise((source.getY() + 2 * destination.getY()) / 3)));
+        line.addNode(new Point(destination.getX(), destination.getY()));
     }
 
     private double noise(double val) {

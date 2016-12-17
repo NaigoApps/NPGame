@@ -9,6 +9,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import npgame.NPPanel;
 import npgame.graph.Node;
 
@@ -29,6 +31,8 @@ public class GNode implements Drawable {
     private int size;
 
     private boolean highlighted;
+    private ArrayList<Point> blobs;
+    private ArrayList<LagrangeLine> blobsPts;
 
     public GNode(Node node, int x, int y, int size, GGraph graph) {
         this.node = node;
@@ -53,13 +57,16 @@ public class GNode implements Drawable {
         }
         double xPx = parent.gridX2Px(x);
         double yPx = parent.gridY2Px(y);
-        ArrayList<Point> blobs = new ArrayList<>();
-        for (GNode neighbour : getNeighbours()) {
-            double blobX = parent.gridX2Px(neighbour.getX()) - xPx;
-            double blobY = parent.gridY2Px(neighbour.getY()) - yPx;
-            Point blobCoord = new Point(blobX, blobY);
-            blobCoord = blobCoord.div(Math.sqrt(blobCoord.x * blobCoord.x + blobCoord.y * blobCoord.y) * 2 / size);
-            blobs.add(blobCoord);
+        if (blobs == null) {
+            blobs = new ArrayList<>();
+            for (GNode neighbour : getNeighbours()) {
+                double blobX = parent.gridX2Px(neighbour.getX()) - xPx;
+                double blobY = parent.gridY2Px(neighbour.getY()) - yPx;
+                Point blobCoord = new Point(blobX, blobY);
+                blobCoord = blobCoord.div(Math.sqrt(blobCoord.x * blobCoord.x + blobCoord.y * blobCoord.y) * 2 / size);
+//                blobCoord = blobCoord.div(0.5);
+                blobs.add(blobCoord);
+            }
         }
         AffineTransform old = g.getTransform();
         g.translate(xPx, yPx);
@@ -76,9 +83,15 @@ public class GNode implements Drawable {
             g.fillOval((int) (blob.x - 2), (int) (blob.y - 2), 5, 5);
         }
         g.setColor(Color.MAGENTA);
-        Point[] blobPts = makeBlob(xPx, yPx, blobs, -size, -size, size, size);
-        for (Point blobPt : blobPts) {
-            g.fillOval((int) (blobPt.x - 1), (int) (blobPt.y - 1), 3, 3);
+        if (blobsPts == null) {
+            blobsPts = makeBlob(blobs, -size * 2, -size * 2, size * 2, size * 2);
+        }
+
+        for (int i = 0; i < blobsPts.size(); i++) {
+            LagrangeLine blobPts = blobsPts.get(i);
+            for (int j = 0; j < blobPts.getPointsNumber() - 1; j++) {
+                g.drawLine((int) blobPts.getPoint(j).x, (int) blobPts.getPoint(j).y, (int) blobPts.getPoint(j + 1).x, (int) blobPts.getPoint(j + 1).y);
+            }
         }
 
         g.setTransform(old);
@@ -142,27 +155,48 @@ public class GNode implements Drawable {
         return nodes.toArray(new GNode[nodes.size()]);
     }
 
-    private Point[] makeBlob(double xPx, double yPx, ArrayList<Point> blobs, double minX, double minY, double maxX, double maxY) {
+    private ArrayList<LagrangeLine> makeBlob(ArrayList<Point> blobs, double minX, double minY, double maxX, double maxY) {
         Point[][] grid = makeGrid(minX, minY, maxX, maxY);
-        BlobFunction function = new BlobFunction(blobs.toArray(new Point[blobs.size()]), size/2);
-        ArrayList<Point> pts = new ArrayList<>();
-        for (int i = 0; i < grid.length; i++) {
+        BlobFunction function = new BlobFunction(blobs.toArray(new Point[blobs.size()]), size / 4, size / 2);
+        ArrayList<LagrangeLine> lines = new ArrayList<>();
+        for (int i = 0; i < grid.length - 1; i++) {
             for (int j = 0; j < grid[i].length - 1; j++) {
-                Point zero = function.findZeroBetween(grid[i][j], grid[i][j + 1]);
-                if (zero != null) {
-                    pts.add(zero);
+                Segment[] segments = function.zeroPoints(grid[i][j], grid[i][j + 1], grid[i + 1][j], grid[i + 1][j + 1]);
+                for (Segment segment : segments) {
+                    merge(lines, segment);
                 }
             }
         }
-//        for (int i = 0; i < grid.length-1; i++) {
-//            for (int j = 0; j < grid[i].length; j++) {
-//                Point zero = function.findZeroBetween(grid[i][j], grid[i+1][j]);
-//                if (zero != null) {
-//                    pts.add(zero);
-//                }
-//            }
-//        }
-        return pts.toArray(new Point[pts.size()]);
+        if (lines.size() != 1) {
+            System.err.println("WARNING: FOUND " + lines.size() + " CURVES INSTEAD OF ONE");
+        }
+        return lines;
+    }
+
+    private void merge(ArrayList<LagrangeLine> lines, Segment segment) {
+        boolean merged = false;
+        for (int i = 0; i < lines.size() && !merged; i++) {
+            LagrangeLine current = lines.get(i);
+            if (current.getNode(0).equals(segment.getPoint(0))) {
+                current.addNode(0, segment.getPoint(1));
+                merged = true;
+            } else if (current.getNode(0).equals(segment.getPoint(1))) {
+                current.addNode(0, segment.getPoint(0));
+                merged = true;
+            } else if (current.getNode(current.getNodesNumber() - 1).equals(segment.getPoint(0))) {
+                current.addNode(segment.getPoint(1));
+                merged = true;
+            } else if (current.getNode(current.getNodesNumber() - 1).equals(segment.getPoint(1))) {
+                current.addNode(segment.getPoint(0));
+                merged = true;
+            }
+        }
+        if (!merged) {
+            LagrangeLine pts = new LagrangeLine();
+            pts.addNode(segment.getPoint(0));
+            pts.addNode(segment.getPoint(1));
+            lines.add(pts);
+        }
     }
 
     private class BlobFunction {
@@ -170,49 +204,68 @@ public class GNode implements Drawable {
         public static final double EPS = 0.01;
 
         private Point[] others;
-        private double distance;
+        private double k;
+        private double k1;
 
-        public BlobFunction(Point[] others, double d) {
+        public BlobFunction(Point[] others, double k, double k1) {
             this.others = others;
-            this.distance = d;
+            this.k = k;
+            this.k1 = k1;
         }
 
         public double f(Point p) {
             double z = 0;
             for (Point pt : others) {
-                z += Math.sqrt((p.x - pt.x) * (p.x - pt.x) + (p.y - pt.y) * (p.y - pt.y));
+                z += gauss(pt, new Point(size / 8, size / 8), p);
             }
-            z += Math.sqrt(p.x*p.x + p.y * p.y);
-            return z - distance;
+            z += 1.5 * gauss(new Point(0, 0), new Point(size / 2, size / 2), p);
+            return z - 0.8;
         }
 
-        private Point findZeroBetween(Point p1, Point p2) {
-            if (f(p1) * f(p2) < 0) {
-                Point mid = p1.avg(p2);
-                if (isZero(f(mid))) {
-                    return mid;
-                } else {
-                    if (f(mid) * f(p1) < 0) {
-                        findZeroBetween(p1, mid);
-                    } else {
-                        findZeroBetween(p2, mid);
-                    }
-                }
-            }
-            return null;
+        private double gauss(Point mi, Point sigma, Point p) {
+            return Math.exp(-((p.x - mi.x) * (p.x - mi.x) / (2 * sigma.x * sigma.x)
+                    + (p.y - mi.y) * (p.y - mi.y) / (2 * sigma.y * sigma.y)));
         }
 
-        private boolean isZero(double f) {
-            return Math.abs(f) < EPS;
+        public Segment[] zeroPoints(Point nw, Point ne, Point sw, Point se) {
+            int[] bitmap = new int[4];
+            bitmap[0] = f(nw) < 0 ? 0 : 1;
+            bitmap[1] = f(ne) < 0 ? 0 : 1;
+            bitmap[2] = f(se) < 0 ? 0 : 1;
+            bitmap[3] = f(sw) < 0 ? 0 : 1;
+            int index = bitmap[0] * 8 + bitmap[1] * 4 + bitmap[2] * 2 + bitmap[3];
+            Point nwne = nw.avg(ne);
+            Point swse = sw.avg(se);
+            Point nwsw = nw.avg(sw);
+            Point nese = ne.avg(se);
+            Segment[][] lookup = new Segment[][]{
+                {},
+                {new Segment(nwsw, swse)},
+                {new Segment(swse, nese)},
+                {new Segment(nwsw, nese)},
+                {new Segment(nwne, nese)},
+                {new Segment(swse, nese), new Segment(nwsw, nwne)},
+                {new Segment(nwne, swse)},
+                {new Segment(nwsw, nwne)},
+                {new Segment(nwsw, nwne)},
+                {new Segment(nwne, swse)},
+                {new Segment(nwsw, swse), new Segment(nwne, nese)},
+                {new Segment(nwne, nese)},
+                {new Segment(nwsw, nese)},
+                {new Segment(swse, nese)},
+                {new Segment(nwsw, swse)},
+                {}
+            };
+            return lookup[index];
         }
     }
 
     private Point[][] makeGrid(double minX, double minY, double maxX, double maxY) {
-        int gridSize = 500;
+        int gridSize = 10;
         Point[][] grid = new Point[gridSize][gridSize];
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid.length; j++) {
-                grid[i][j] = new Point((maxY - minX)*i/gridSize + minX, (maxY - minY)*j/gridSize + minY);
+                grid[i][j] = new Point((maxX - minX) * i / (gridSize - 1) + minX, (maxY - minY) * j / (gridSize - 1) + minY);
             }
         }
         return grid;

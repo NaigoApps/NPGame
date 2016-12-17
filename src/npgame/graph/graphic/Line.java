@@ -11,10 +11,13 @@ package npgame.graph.graphic;
  */
 public interface Line{
 
-    public void addPoint(Point p);
+    public void addNode(Point p);
+    public void addNode(int i, Point p);
     
+    public Point getNode(int i);
     public Point getPoint(int i);
 
+    public int getNodesNumber();
     public int getPointsNumber();
     
     public void printNodes();

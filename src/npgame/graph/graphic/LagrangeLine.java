@@ -24,7 +24,7 @@ public class LagrangeLine implements Line {
     }
 
     @Override
-    public void addPoint(Point p) {
+    public void addNode(Point p) {
         nodes.add(p);
         buildCurve();
     }
@@ -104,5 +104,21 @@ public class LagrangeLine implements Line {
         for (Point point : nodes) {
             System.out.println("(" + point.x + ";" + point.y + ")");
         }
+    }
+
+    @Override
+    public void addNode(int i, Point p) {
+        this.nodes.add(i, p);
+        buildCurve();
+    }
+
+    @Override
+    public int getNodesNumber() {
+        return nodes.size();
+    }
+
+    @Override
+    public Point getNode(int i) {
+        return nodes.get(i);
     }
 }
