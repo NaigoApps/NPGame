@@ -9,8 +9,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import npgame.NPPanel;
 import npgame.graph.Node;
 
@@ -32,7 +30,7 @@ public class GNode implements Drawable {
 
     private boolean highlighted;
     private ArrayList<Point> blobs;
-    private ArrayList<LagrangeLine> blobsPts;
+    private ArrayList<BSplineLine> blobsPts;
 
     public GNode(Node node, int x, int y, int size, GGraph graph) {
         this.node = node;
@@ -88,9 +86,15 @@ public class GNode implements Drawable {
         }
 
         for (int i = 0; i < blobsPts.size(); i++) {
-            LagrangeLine blobPts = blobsPts.get(i);
+            BSplineLine blobPts = blobsPts.get(i);
+            blobPts.makeCurve();
+            g.setColor(Color.RED);
             for (int j = 0; j < blobPts.getPointsNumber() - 1; j++) {
                 g.drawLine((int) blobPts.getPoint(j).x, (int) blobPts.getPoint(j).y, (int) blobPts.getPoint(j + 1).x, (int) blobPts.getPoint(j + 1).y);
+            }
+            g.setColor(Color.BLUE);
+            for (int j = 0; j < blobPts.getNodesNumber() - 1; j++) {
+                g.drawLine((int) blobPts.getNode(j).x, (int) blobPts.getNode(j).y, (int) blobPts.getNode(j + 1).x, (int) blobPts.getNode(j + 1).y);
             }
         }
 
@@ -155,10 +159,10 @@ public class GNode implements Drawable {
         return nodes.toArray(new GNode[nodes.size()]);
     }
 
-    private ArrayList<LagrangeLine> makeBlob(ArrayList<Point> blobs, double minX, double minY, double maxX, double maxY) {
+    private ArrayList<BSplineLine> makeBlob(ArrayList<Point> blobs, double minX, double minY, double maxX, double maxY) {
         Point[][] grid = makeGrid(minX, minY, maxX, maxY);
         BlobFunction function = new BlobFunction(blobs.toArray(new Point[blobs.size()]), size / 4, size / 2);
-        ArrayList<LagrangeLine> lines = new ArrayList<>();
+        ArrayList<BSplineLine> lines = new ArrayList<>();
         for (int i = 0; i < grid.length - 1; i++) {
             for (int j = 0; j < grid[i].length - 1; j++) {
                 Segment[] segments = function.zeroPoints(grid[i][j], grid[i][j + 1], grid[i + 1][j], grid[i + 1][j + 1]);
@@ -173,10 +177,10 @@ public class GNode implements Drawable {
         return lines;
     }
 
-    private void merge(ArrayList<LagrangeLine> lines, Segment segment) {
+    private void merge(ArrayList<BSplineLine> lines, Segment segment) {
         boolean merged = false;
         for (int i = 0; i < lines.size() && !merged; i++) {
-            LagrangeLine current = lines.get(i);
+            BSplineLine current = lines.get(i);
             if (current.getNode(0).equals(segment.getPoint(0))) {
                 current.addNode(0, segment.getPoint(1));
                 merged = true;
@@ -192,7 +196,7 @@ public class GNode implements Drawable {
             }
         }
         if (!merged) {
-            LagrangeLine pts = new LagrangeLine();
+            BSplineLine pts = new BSplineLine();
             pts.addNode(segment.getPoint(0));
             pts.addNode(segment.getPoint(1));
             lines.add(pts);
@@ -261,7 +265,7 @@ public class GNode implements Drawable {
     }
 
     private Point[][] makeGrid(double minX, double minY, double maxX, double maxY) {
-        int gridSize = 10;
+        int gridSize = 30;
         Point[][] grid = new Point[gridSize][gridSize];
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid.length; j++) {
